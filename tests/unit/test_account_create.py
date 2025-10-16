@@ -16,16 +16,24 @@ class TestAccount:
         assert account.balance == 0
         assert account.pesel == "Invalid"
 
-    def test_promo_code_valid(self):
-        account = Account("Jane", "Smith", "12345", 0, "promo_123")
+    def test_promo_code_valid_year_valid(self):
+        account = Account("Jane", "Smith", "61071512345", 0, "promo_123")
         assert account.balance == 50
 
 
-    def test_promo_code_invalid(self):
-        account = Account("Jane", "Smith", "12345", 0, "promo213")
+    def test_promo_code_valid_year_invalid(self):
+        account = Account("Jane", "Smith", "51071512345", 0, "promo_213")
         assert account.balance == 0
 
     def test_promo_code_none(self):
-        account = Account("Jane", "Smith", "12345", 0)
+        account = Account("Jane", "Smith", "61071512345", 0)
+        assert account.balance == 0
+
+    def test_promo_code_invalid_year_valid(self):
+        account = Account("Jane", "Smith", "61071512345", 0, "promo223")
+        assert account.balance == 0
+
+    def test_promo_code_invalid_year_invalid(self):
+        account = Account("Jane", "Smith", "41071512345", 0, "promo123")
         assert account.balance == 0
 

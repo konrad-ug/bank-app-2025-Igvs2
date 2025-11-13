@@ -35,3 +35,21 @@ class PersonalAccount(Account):
             self.balance -= total_amount
             self.history.append(f'-{amount}')
             self.history.append(f"-{int(fee)}")
+
+    def submit_for_loan(self, amount):
+
+
+        def one():
+            return len(self.history) >= 3 and all(float(x) > 0 for x in self.history[-3:])
+
+        def two():
+            return len(self.history) >= 5 and sum(float(x) for x in self.history[-5:]) > amount
+
+        approved = one() or two()
+
+        if approved:
+            self.balance += amount
+
+        return approved
+
+

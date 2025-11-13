@@ -15,3 +15,15 @@ class TestTransfers:
         account.express_outgoing(50.0)
         assert account.balance == 95.0
         assert account.history == ["-50.0", "-5"]
+    def test_outgoing_transfer(self):
+        account = CompanyAccount("firmex", "1234567899")
+        account.balance = 150.0
+        account.outgoing_transfer(50.0)
+        assert account.balance == 100.0
+        assert account.history == ["-50.0"]
+    def test_incoming_transfer(self):
+        account = CompanyAccount("firmex", "1234567899")
+        account.balance = 150.0
+        account.incoming_transfer(50.0)
+        assert account.balance == 200.0
+        assert account.history == ["50.0"]

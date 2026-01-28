@@ -265,3 +265,5 @@ class TestDeleteAccount:
         
         count_response = client.get(f"{base_url}/count")
         assert count_response.get_json()["count"] == 1
+
+

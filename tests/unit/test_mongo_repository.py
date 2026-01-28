@@ -122,22 +122,58 @@ class TestMongoAccountsRepository:
         # Assert
         mock_collection.delete_many.assert_called_once_with({})
         assert mock_collection.update_one.call_count == 0
-    def test_save_all_with_personal_account(self):
-        # Test saving a PersonalAccount to ensure 'pesel' branch is covered
-        personal_account = PersonalAccount("12345678901", "Jan", "Kowalski")
+    def test_save_all_with_personal_account_pesel_branch(self, mocker):
+        # Arrange - Ensures 'pesel' branch of hasattr() is covered
+        mock_collection = mocker.Mock()
         repo = MongoAccountsRepository()
+        repo._collection = mock_collection
+        
+        personal_account = PersonalAccount("Jan", "Kowalski", "80010112345")
+        personal_account.balance = 1500.0
+        
+        # Act
         repo.save_all([personal_account])
-        loaded = repo.load_all()
-        assert len(loaded) == 1
-        assert loaded[0].pesel == "12345678901"
-        repo.close()
-
-    def test_save_all_with_company_account(self):
-        #Test saving a CompanyAccount to ensure 'nip' branch is covered
-        company_account = CompanyAccount("1234567890", "Company Ltd")
+        
+        # Assert - Verify pesel branch is used in query
+        mock_collection.delete_many.assert_called_once_with({})
+        assert mock_collection.update_one.call_count == 1
+        
+        # Verify the query uses 'pesel' (not 'nip')
+        call_args = mock_collection.update_one.call_args_list[0]
+        assert call_args[0][0] == {"pesel": "80010112345"}
+        assert call_args[0][1]["$set"]["type"] == "personal"
+        assert call_args[1]["upsert"] is True
+    
+    def test_save_all_with_company_account_nip_branch(self, mocker):
+        # Arrange - Ensures 'nip' branch of hasattr() is covered
+        mock_collection = mocker.Mock()
         repo = MongoAccountsRepository()
-        repo.save_all([company_account])
-        loaded = repo.load_all()
-        assert len(loaded) == 1
-        assert loaded[0].nip == "1234567890"
-        repo.close()
+        repo._collection = mock_collection
+        
+        # Create company account without NIP validation
+        company = object.__new__(CompanyAccount)
+        CompanyAccount.__bases__[0].__init__(company)
+        company.company_name = "TechCorp"
+        company.nip = "9876543210"
+        company.balance = 5000.0
+        company.history = []
+        # Explicitly remove pesel attribute to ensure only nip is present
+        if hasattr(company, 'pesel'):
+            delattr(company, 'pesel')
+        
+        # Verify our company object doesn't have pesel
+        assert not hasattr(company, 'pesel'), "Company should not have pesel attribute"
+        assert hasattr(company, 'nip'), "Company should have nip attribute"
+        
+        # Act
+        repo.save_all([company])
+        
+        # Assert - Verify nip branch is used in query
+        mock_collection.delete_many.assert_called_once_with({})
+        assert mock_collection.update_one.call_count == 1
+        
+        # Verify the query uses 'nip' (not 'pesel') - this covers the else branch
+        call_args = mock_collection.update_one.call_args_list[0]
+        assert call_args[0][0] == {"nip": "9876543210"}
+        assert call_args[0][1]["$set"]["type"] == "company"
+        assert call_args[1]["upsert"] is True

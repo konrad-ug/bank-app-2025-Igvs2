@@ -15,6 +15,9 @@ class AccountsRegistry:
                 return account
         return None
     
+    def pesel_exists(self, pesel: str) -> bool:
+        return self.find_account_by_pesel(pesel) is not None
+    
     def get_all_accounts(self) -> list:
         return self.accounts
     

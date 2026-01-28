@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from src.accounts_registry import AccountsRegistry
 from src.personal_account import PersonalAccount
+from src.company_account import CompanyAccount
 
 app = Flask(__name__)
 registry = AccountsRegistry()
@@ -11,9 +12,30 @@ def create_account():
     data = request.get_json()
     print(f"Create account request: {data}")
     
-    account = PersonalAccount(data["name"], data["surname"], data["pesel"])
-    registry.add_account(account)
-    return jsonify({"message": "Account created"}), 201
+    is_company = "nip" in data
+    
+    if is_company:
+        nip = data.get("nip")
+        
+        if not nip or len(nip) != 10:
+            return jsonify({"error": "Invalid NIP format. NIP must be exactly 10 digits."}), 400
+        
+        if any(hasattr(acc, 'nip') and acc.nip == nip for acc in registry.get_all_accounts()):
+            return jsonify({"error": "Account with this NIP already exists"}), 409
+        
+        try:
+            account = CompanyAccount(data["name"], nip)
+            registry.add_account(account)
+            return jsonify({"message": "Account created"}), 201
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 400
+    else:
+        if registry.pesel_exists(data["pesel"]):
+            return jsonify({"error": "Account with this PESEL already exists"}), 409
+        
+        account = PersonalAccount(data["name"], data["surname"], data["pesel"])
+        registry.add_account(account)
+        return jsonify({"message": "Account created"}), 201
 
 
 @app.route("/api/accounts", methods=['GET'])
@@ -83,6 +105,40 @@ def delete_account(pesel):
     
     registry.accounts.remove(account)
     return jsonify({"message": "Account deleted"}), 200
+
+
+@app.route("/api/accounts/<pesel>/transfer", methods=['POST'])
+def transfer(pesel):
+    print(f"Transfer request for PESEL: {pesel}")
+    account = registry.find_account_by_pesel(pesel)
+    
+    if account is None:
+        return jsonify({"error": "Account not found"}), 404
+    
+    data = request.get_json()
+    amount = data.get("amount")
+    transfer_type = data.get("type")
+    
+    valid_types = ["incoming", "outgoing", "express"]
+    if transfer_type not in valid_types:
+        return jsonify({"error": f"Invalid transfer type. Must be one of: {', '.join(valid_types)}"}), 400
+    
+    balance_before = account.balance
+    
+    if transfer_type == "incoming":
+        account.incoming_transfer(amount)
+    elif transfer_type == "outgoing":
+        account.outgoing_transfer(amount)
+    elif transfer_type == "express":
+        account.express_outgoing(amount)
+    
+    balance_after = account.balance
+    
+    if transfer_type in ["outgoing", "express"]:
+        if balance_before == balance_after:
+            return jsonify({"error": "Transaction failed. Check balance and amount."}), 422
+    
+    return jsonify({"message": "Zlecenie przyjęto do realizacji"}), 200
 
 
 if __name__ == '__main__':

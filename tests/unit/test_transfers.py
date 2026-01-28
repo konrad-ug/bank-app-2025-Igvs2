@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch, MagicMock
 from src.account import Account
 from src.personal_account import PersonalAccount
 from src.company_account import CompanyAccount 
@@ -12,26 +13,25 @@ class TestTransfers:
 
     @pytest.fixture
     def company_account(self):
-        account = CompanyAccount("metalex", "123456890")
-        account.balance = 100.0
-        return account
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {'result': {'subject': {'statusVat': 'Czynny'}}}
+        
+        with patch('src.company_account.requests.get', return_value=mock_response):
+            account = CompanyAccount("metalex", "1234567890")
+            account.balance = 100.0
+            return account
 
     @pytest.mark.parametrize("account_type,initial_balance,transfer_type,amount,expected_balance", [
-        # valid transfers
         ("personal", 0.0, "incoming", 100.0, 100.0),
         ("personal", 100.0, "outgoing", 50.0, 50.0),
         ("personal", 100.0, "incoming", 50.0, 150.0),
-        # exceeding balance
         ("personal", 30.0, "outgoing", 50.0, 30.0),
-        # negative amounts
         ("personal", 0.0, "incoming", -20.0, 0.0),
         ("personal", 0.0, "outgoing", -20.0, 0.0),
-        # valid transfers
         ("company", 100.0, "outgoing", 50.0, 50.0),
         ("company", 100.0, "incoming", 50.0, 150.0),
-        # exceeding balance
         ("company", 30.0, "outgoing", 50.0, 30.0),
-        # negative amounts
         ("company", 0.0, "incoming", -20.0, 0.0),
         ("company", 0.0, "outgoing", -20.0, 0.0),
     ])

@@ -6,11 +6,8 @@ from src.company_account import CompanyAccount
 
 
 class TestPersonalAccountEmailHistory:
-    """Tests for sending personal account history via email."""
     
     def test_send_history_calls_smtp_with_correct_parameters(self, mocker):
-        """Test that send method is called with correct subject, text, and email."""
-        # Mock SMTP client
         mock_smtp = mocker.patch('src.personal_account.SMTPClient')
         mock_instance = mock_smtp.return_value
         mock_instance.send.return_value = True
@@ -20,10 +17,8 @@ class TestPersonalAccountEmailHistory:
         
         result = account.send_history_via_email("test@example.com")
         
-        # Verify send was called once
         mock_instance.send.assert_called_once()
         
-        # Verify call arguments
         call_args = mock_instance.send.call_args
         subject = call_args[0][0]
         text = call_args[0][1]
@@ -36,7 +31,6 @@ class TestPersonalAccountEmailHistory:
         assert result == True
     
     def test_send_history_returns_true_on_success(self, mocker):
-        """Test that method returns True when SMTP send succeeds."""
         mock_smtp = mocker.patch('src.personal_account.SMTPClient')
         mock_instance = mock_smtp.return_value
         mock_instance.send.return_value = True
@@ -49,7 +43,6 @@ class TestPersonalAccountEmailHistory:
         assert result == True
     
     def test_send_history_returns_false_on_failure(self, mocker):
-        """Test that method returns False when SMTP send fails."""
         mock_smtp = mocker.patch('src.personal_account.SMTPClient')
         mock_instance = mock_smtp.return_value
         mock_instance.send.return_value = False
@@ -62,7 +55,6 @@ class TestPersonalAccountEmailHistory:
         assert result == False
     
     def test_send_history_with_empty_history(self, mocker):
-        """Test sending email with empty transaction history."""
         mock_smtp = mocker.patch('src.personal_account.SMTPClient')
         mock_instance = mock_smtp.return_value
         mock_instance.send.return_value = True
@@ -77,17 +69,13 @@ class TestPersonalAccountEmailHistory:
 
 
 class TestCompanyAccountEmailHistory:
-    """Tests for sending company account history via email."""
     
     def test_send_history_calls_smtp_with_correct_parameters(self, mocker):
-        """Test that send method is called with correct subject, text, and email."""
-        # Mock NIP validation
         mock_response = mocker.MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {'result': {'subject': {'statusVat': 'Czynny'}}}
         mocker.patch('src.company_account.requests.get', return_value=mock_response)
         
-        # Mock SMTP client
         mock_smtp = mocker.patch('src.company_account.SMTPClient')
         mock_instance = mock_smtp.return_value
         mock_instance.send.return_value = True
@@ -97,10 +85,8 @@ class TestCompanyAccountEmailHistory:
         
         result = account.send_history_via_email("company@example.com")
         
-        # Verify send was called once
         mock_instance.send.assert_called_once()
         
-        # Verify call arguments
         call_args = mock_instance.send.call_args
         subject = call_args[0][0]
         text = call_args[0][1]
@@ -113,14 +99,11 @@ class TestCompanyAccountEmailHistory:
         assert result == True
     
     def test_send_history_returns_true_on_success(self, mocker):
-        """Test that method returns True when SMTP send succeeds."""
-        # Mock NIP validation
         mock_response = mocker.MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {'result': {'subject': {'statusVat': 'Czynny'}}}
         mocker.patch('src.company_account.requests.get', return_value=mock_response)
         
-        # Mock SMTP client
         mock_smtp = mocker.patch('src.company_account.SMTPClient')
         mock_instance = mock_smtp.return_value
         mock_instance.send.return_value = True
@@ -133,14 +116,11 @@ class TestCompanyAccountEmailHistory:
         assert result == True
     
     def test_send_history_returns_false_on_failure(self, mocker):
-        """Test that method returns False when SMTP send fails."""
-        # Mock NIP validation
         mock_response = mocker.MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {'result': {'subject': {'statusVat': 'Czynny'}}}
         mocker.patch('src.company_account.requests.get', return_value=mock_response)
         
-        # Mock SMTP client
         mock_smtp = mocker.patch('src.company_account.SMTPClient')
         mock_instance = mock_smtp.return_value
         mock_instance.send.return_value = False
@@ -153,14 +133,11 @@ class TestCompanyAccountEmailHistory:
         assert result == False
     
     def test_send_history_with_empty_history(self, mocker):
-        """Test sending email with empty transaction history."""
-        # Mock NIP validation
         mock_response = mocker.MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {'result': {'subject': {'statusVat': 'Czynny'}}}
         mocker.patch('src.company_account.requests.get', return_value=mock_response)
         
-        # Mock SMTP client
         mock_smtp = mocker.patch('src.company_account.SMTPClient')
         mock_instance = mock_smtp.return_value
         mock_instance.send.return_value = True
@@ -174,14 +151,11 @@ class TestCompanyAccountEmailHistory:
         assert result == True
     
     def test_send_history_date_format(self, mocker):
-        """Test that date format is YYYY-MM-DD in subject."""
-        # Mock NIP validation
         mock_response = mocker.MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {'result': {'subject': {'statusVat': 'Czynny'}}}
         mocker.patch('src.company_account.requests.get', return_value=mock_response)
         
-        # Mock SMTP client
         mock_smtp = mocker.patch('src.company_account.SMTPClient')
         mock_instance = mock_smtp.return_value
         mock_instance.send.return_value = True
@@ -193,7 +167,6 @@ class TestCompanyAccountEmailHistory:
         call_args = mock_instance.send.call_args[0]
         subject = call_args[0]
         
-        # Verify date format YYYY-MM-DD
         import re
         date_pattern = r'\d{4}-\d{2}-\d{2}'
         assert re.search(date_pattern, subject) is not None

@@ -20,8 +20,12 @@ class MongoAccountsRepository(AccountsRepository):
         """
         self._collection.delete_many({})
         for account in accounts:
+            if hasattr(account, 'pesel'):
+                query = {"pesel": account.pesel}
+            else:
+                query = {"nip": account.nip}
             self._collection.update_one(
-                {"pesel": account.pesel if hasattr(account, 'pesel') else account.nip},
+                query,
                 {"$set": account.to_dict()},
                 upsert=True,
             )

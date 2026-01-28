@@ -2,9 +2,11 @@ from flask import Flask, request, jsonify
 from src.accounts_registry import AccountsRegistry
 from src.personal_account import PersonalAccount
 from src.company_account import CompanyAccount
+from src.mongo_accounts_repository import MongoAccountsRepository
 
 app = Flask(__name__)
 registry = AccountsRegistry()
+mongo_repo = MongoAccountsRepository()
 
 
 @app.route("/api/accounts", methods=['POST'])
@@ -188,6 +190,36 @@ def transfer_between_accounts():
         recipient.incoming_transfer(amount)
     
     return jsonify({"message": "Transfer completed"}), 200
+
+
+@app.route("/api/accounts/save", methods=['POST'])
+def save_accounts():
+    """Save all accounts from registry to MongoDB"""
+    print("Save accounts to database request received")
+    try:
+        accounts = registry.get_all_accounts()
+        mongo_repo.save_all(accounts)
+        return jsonify({"message": f"Saved {len(accounts)} accounts to database"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/accounts/load", methods=['POST'])
+def load_accounts():
+    """Load all accounts from MongoDB to registry"""
+    print("Load accounts from database request received")
+    try:
+        # Clear current registry
+        registry.accounts.clear()
+        
+        # Load accounts from database
+        accounts = mongo_repo.load_all()
+        for account in accounts:
+            registry.add_account(account)
+        
+        return jsonify({"message": f"Loaded {len(accounts)} accounts from database"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':

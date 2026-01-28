@@ -54,20 +54,29 @@ class PersonalAccount(Account):
         return approved
     
     def send_history_via_email(self, email_address: str) -> bool:
-        """
-        Send account transfer history via email.
-        
-        Args:
-            email_address: Recipient email address
-            
-        Returns:
-            True if email sent successfully, False otherwise
-        """
         today = datetime.now().strftime('%Y-%m-%d')
         subject = f"Account Transfer History {today}"
         text = f"Personal account history: {self.history}"
         
         smtp_client = SMTPClient()
         return smtp_client.send(subject, text, email_address)
+    
+    def to_dict(self):
+        return {
+            "type": "personal",
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "pesel": self.pesel,
+            "balance": self.balance,
+            "history": self.history,
+            "promo_kod": self.promo_kod
+        }
+    
+    @staticmethod
+    def from_dict(data):
+        account = PersonalAccount(data["first_name"], data["last_name"], data["pesel"], data.get("promo_kod"))
+        account.balance = data["balance"]
+        account.history = data["history"]
+        return account
 
 

@@ -141,5 +141,54 @@ def transfer(pesel):
     return jsonify({"message": "Zlecenie przyjęto do realizacji"}), 200
 
 
+@app.route("/api/transfer", methods=['POST'])
+def transfer_between_accounts():
+    print("Transfer between accounts request received")
+    data = request.get_json()
+    
+    from_account = data.get("from_account")
+    to_account = data.get("to_account")
+    amount = data.get("amount")
+    express = data.get("express", False)
+    
+    if not from_account or not to_account or not amount:
+        return jsonify({"error": "Missing required fields: from_account, to_account, amount"}), 400
+    
+    # Handle external transfers (for setting initial balance)
+    if from_account == "external":
+        recipient = registry.find_account_by_pesel(to_account)
+        if recipient is None:
+            return jsonify({"error": "Account not found"}), 404
+        recipient.incoming_transfer(amount)
+        return jsonify({"message": "Transfer completed"}), 200
+    
+    # Regular transfer between accounts
+    sender = registry.find_account_by_pesel(from_account)
+    recipient = registry.find_account_by_pesel(to_account)
+    
+    if sender is None or recipient is None:
+        return jsonify({"error": "One or both accounts not found"}), 404
+    
+    if amount <= 0:
+        return jsonify({"error": "Amount must be greater than 0"}), 400
+    
+    if express:
+        # Express transfer with fee
+        fee = 1.0
+        total_amount = amount + fee
+        if total_amount > sender.balance:
+            return jsonify({"error": "Insufficient funds"}), 400
+        sender.express_outgoing(amount)
+        recipient.incoming_transfer(amount)
+    else:
+        # Standard transfer
+        if amount > sender.balance:
+            return jsonify({"error": "Insufficient funds"}), 400
+        sender.outgoing_transfer(amount)
+        recipient.incoming_transfer(amount)
+    
+    return jsonify({"message": "Transfer completed"}), 200
+
+
 if __name__ == '__main__':
     app.run(debug=True)

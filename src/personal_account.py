@@ -31,7 +31,23 @@ class PersonalAccount(Account):
     def express_outgoing(self, amount):
         fee = 1.0
         total_amount = amount + fee
-        if (amount > 0 and total_amount <= self.balance + fee):
+        if amount > 0:
             self.balance -= total_amount
             self.history.append(f'-{amount}')
             self.history.append(f"-{int(fee)}")
+
+    def _last_three_are_deposits(self):
+        return len(self.history) >= 3 and all(float(x) > 0 for x in self.history[-3:])
+
+    def _sum_of_last_five_exceeds_amount(self, amount):
+        return len(self.history) >= 5 and sum(float(x) for x in self.history[-5:]) > amount
+
+    def submit_for_loan(self, amount):
+        approved = self._last_three_are_deposits() or self._sum_of_last_five_exceeds_amount(amount)
+
+        if approved:
+            self.balance += amount
+
+        return approved
+
+

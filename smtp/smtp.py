@@ -13,5 +13,4 @@ class SMTPClient:
         Returns:
             True if email sent successfully, False otherwise
         """
-        # Implementation will be provided by the team
         return False

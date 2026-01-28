@@ -68,29 +68,18 @@ class CompanyAccount(Account):
         return approved
     
     def send_history_via_email(self, email_address: str) -> bool:
+        """
+        Send account transfer history via email.
+        
+        Args:
+            email_address: Recipient email address
+            
+        Returns:
+            True if email sent successfully, False otherwise
+        """
         today = datetime.now().strftime('%Y-%m-%d')
         subject = f"Account Transfer History {today}"
         text = f"Company account history: {self.history}"
         
         smtp_client = SMTPClient()
         return smtp_client.send(subject, text, email_address)
-    
-    def to_dict(self):
-        return {
-            "type": "company",
-            "company_name": self.company_name,
-            "nip": self.nip,
-            "balance": self.balance,
-            "history": self.history
-        }
-    
-    @staticmethod
-    def from_dict(data):
-        # Skip NIP validation when loading from DB
-        account = object.__new__(CompanyAccount)
-        Account.__init__(account)
-        account.company_name = data["company_name"]
-        account.nip = data["nip"]
-        account.balance = data["balance"]
-        account.history = data["history"]
-        return account

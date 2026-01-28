@@ -83,3 +83,23 @@ class CompanyAccount(Account):
         
         smtp_client = SMTPClient()
         return smtp_client.send(subject, text, email_address)
+    
+    def to_dict(self):
+        return {
+            "type": "company",
+            "company_name": self.company_name,
+            "nip": self.nip,
+            "balance": self.balance,
+            "history": self.history
+        }
+    
+    @staticmethod
+    def from_dict(data):
+        # Skip NIP validation when loading from DB
+        account = object.__new__(CompanyAccount)
+        Account.__init__(account)
+        account.company_name = data["company_name"]
+        account.nip = data["nip"]
+        account.balance = data["balance"]
+        account.history = data["history"]
+        return account

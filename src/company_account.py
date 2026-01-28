@@ -68,15 +68,6 @@ class CompanyAccount(Account):
         return approved
     
     def send_history_via_email(self, email_address: str) -> bool:
-        """
-        Send account transfer history via email.
-        
-        Args:
-            email_address: Recipient email address
-            
-        Returns:
-            True if email sent successfully, False otherwise
-        """
         today = datetime.now().strftime('%Y-%m-%d')
         subject = f"Account Transfer History {today}"
         text = f"Company account history: {self.history}"

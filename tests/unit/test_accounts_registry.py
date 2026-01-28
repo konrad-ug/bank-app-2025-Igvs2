@@ -90,3 +90,47 @@ class TestAccountsRegistry:
         assert found.first_name == first_name
         assert found.last_name == last_name
         assert found.pesel == pesel
+
+
+class TestPeselUniqueness:
+    @pytest.fixture
+    def registry(self):
+        """Fixture that creates an empty accounts registry."""
+        return AccountsRegistry()
+    
+    def test_pesel_exists_returns_false_for_empty_registry(self, registry):
+        """Test that pesel_exists returns False when registry is empty."""
+        assert registry.pesel_exists("12345678901") is False
+    
+    def test_pesel_exists_returns_true_when_pesel_exists(self, registry):
+        """Test that pesel_exists returns True when PESEL is in registry."""
+        account = PersonalAccount("John", "Doe", "12345678901")
+        registry.add_account(account)
+        
+        assert registry.pesel_exists("12345678901") is True
+    
+    def test_pesel_exists_returns_false_when_pesel_not_found(self, registry):
+        """Test that pesel_exists returns False when PESEL is not in registry."""
+        account = PersonalAccount("John", "Doe", "12345678901")
+        registry.add_account(account)
+        
+        assert registry.pesel_exists("99999999999") is False
+    
+    @pytest.mark.parametrize("pesel", [
+        "11111111111",
+        "22222222222",
+        "33333333333",
+    ])
+    def test_pesel_exists_multiple_accounts(self, registry, pesel):
+        """Test pesel_exists with multiple accounts in registry."""
+        accounts = [
+            PersonalAccount("Alice", "Brown", "11111111111"),
+            PersonalAccount("Charlie", "Davis", "22222222222"),
+            PersonalAccount("Diana", "Evans", "33333333333"),
+        ]
+        
+        for account in accounts:
+            registry.add_account(account)
+        
+        assert registry.pesel_exists(pesel) is True
+        assert registry.pesel_exists("99999999999") is False

@@ -8,8 +8,13 @@ registry = AccountsRegistry()
 
 @app.route("/api/accounts", methods=['POST'])
 def create_account():
+    """Create a new personal account. Returns 409 if PESEL already exists."""
     data = request.get_json()
     print(f"Create account request: {data}")
+    
+    # Check if PESEL already exists
+    if registry.pesel_exists(data["pesel"]):
+        return jsonify({"error": "Account with this PESEL already exists"}), 409
     
     account = PersonalAccount(data["name"], data["surname"], data["pesel"])
     registry.add_account(account)

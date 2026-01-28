@@ -15,3 +15,17 @@ class CompanyAccount(Account):
             self.balance -= total_amount
             self.history.append(f'-{amount}')
             self.history.append(f"-{int(fee)}")
+
+    def _balance_sufficient(self, amount):
+        return self.balance >= amount * 2
+
+    def _has_zus_transfer(self):
+        return "-1775.0" in self.history
+
+    def take_loan(self, amount):
+        approved = self._balance_sufficient(amount) and self._has_zus_transfer()
+
+        if approved:
+            self.balance += amount
+
+        return approved

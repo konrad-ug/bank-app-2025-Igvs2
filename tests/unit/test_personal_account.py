@@ -1,37 +1,34 @@
+import pytest
 from src.personal_account import PersonalAccount
 
 
 class TestPersonalAccount:
-    def test_account_creation(self):
-        account = PersonalAccount("John", "Doe", "00000000000")
-        assert account.first_name == "John"
-        assert account.last_name == "Doe"
-        assert account.balance == 0.0
-        assert account.pesel == "00000000000"
+    @pytest.fixture
+    def base_account(self):
+        return PersonalAccount("John", "Doe", "00000000000")
 
-    def test_pesel_too_short(self):
-        account = PersonalAccount("John", "Doe", "12345")
-        assert account.pesel == "Invalid"
-    def test_pesel_too_long(self):
-        account = PersonalAccount("John", "Doe", "12345123451234512345")
-        assert account.pesel == "Invalid"
-    def test_pesel_none(self):
-        account = PersonalAccount("John", "Doe", None)
+    def test_account_creation(self, base_account):
+        assert base_account.first_name == "John"
+        assert base_account.last_name == "Doe"
+        assert base_account.balance == 0.0
+        assert base_account.pesel == "00000000000"
+
+    @pytest.mark.parametrize("pesel", [
+        "12345",
+        "12345123451234512345",
+        None,
+    ])
+    def test_invalid_pesel(self, pesel):
+        account = PersonalAccount("John", "Doe", pesel)
         assert account.pesel == "Invalid"
 
-    def test_correct_promo(self):
-        account = PersonalAccount("John", "Doe", "79530000000", "PROM_ABC")
-        assert account.balance == 50.0
-    def test_wrong_promo(self):
-        account = PersonalAccount("John", "Doe", "00000000000", "KODY_XYS")
-        assert account.balance == 0.0
-    def test_too_short_promo(self):
-        account = PersonalAccount("John", "Doe", "00000000000", "KODY")
-        assert account.balance == 0.0
-
-    def test_senior_nopromo(self):
-        account = PersonalAccount("John", "Doe", "60011111111", "PROM_KOD")
-        assert account.balance == 0.0
-    def test_notseenior_promo(self):
-        account = PersonalAccount("John", "Doe", "04290000000", "PROM_KOD")
-        assert account.balance == 50.0
+    @pytest.mark.parametrize("pesel,promo_kod,expected_balance", [
+        ("79530000000", "PROM_ABC", 50.0),
+        ("00000000000", "KODY_XYS", 0.0),
+        ("00000000000", "KODY", 0.0),
+        ("60011111111", "PROM_KOD", 0.0),
+        ("04290000000", "PROM_KOD", 50.0),
+    ])
+    def test_promo_code(self, pesel, promo_kod, expected_balance):
+        account = PersonalAccount("John", "Doe", pesel, promo_kod)
+        assert account.balance == expected_balance

@@ -55,5 +55,35 @@ def get_account_by_pesel(pesel):
     return jsonify(account_data), 200
 
 
+@app.route("/api/accounts/<pesel>", methods=['PATCH'])
+def update_account(pesel):
+    print(f"Update account request for PESEL: {pesel}")
+    account = registry.find_account_by_pesel(pesel)
+    
+    if account is None:
+        return jsonify({"error": "Account not found"}), 404
+    
+    data = request.get_json()
+    
+    if "name" in data:
+        account.first_name = data["name"]
+    if "surname" in data:
+        account.last_name = data["surname"]
+    
+    return jsonify({"message": "Account updated"}), 200
+
+
+@app.route("/api/accounts/<pesel>", methods=['DELETE'])
+def delete_account(pesel):
+    print(f"Delete account request for PESEL: {pesel}")
+    account = registry.find_account_by_pesel(pesel)
+    
+    if account is None:
+        return jsonify({"error": "Account not found"}), 404
+    
+    registry.accounts.remove(account)
+    return jsonify({"message": "Account deleted"}), 200
+
+
 if __name__ == '__main__':
     app.run(debug=True)

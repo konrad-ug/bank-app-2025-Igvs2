@@ -122,3 +122,22 @@ class TestMongoAccountsRepository:
         # Assert
         mock_collection.delete_many.assert_called_once_with({})
         assert mock_collection.update_one.call_count == 0
+    def test_save_all_with_personal_account(self):
+        # Test saving a PersonalAccount to ensure 'pesel' branch is covered
+        personal_account = PersonalAccount("12345678901", "Jan", "Kowalski")
+        repo = MongoAccountsRepository()
+        repo.save_all([personal_account])
+        loaded = repo.load_all()
+        assert len(loaded) == 1
+        assert loaded[0].pesel == "12345678901"
+        repo.close()
+
+    def test_save_all_with_company_account(self):
+        #Test saving a CompanyAccount to ensure 'nip' branch is covered
+        company_account = CompanyAccount("1234567890", "Company Ltd")
+        repo = MongoAccountsRepository()
+        repo.save_all([company_account])
+        loaded = repo.load_all()
+        assert len(loaded) == 1
+        assert loaded[0].nip == "1234567890"
+        repo.close()

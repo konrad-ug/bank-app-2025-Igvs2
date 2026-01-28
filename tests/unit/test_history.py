@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch, MagicMock
 from src.account import Account
 from src.personal_account import PersonalAccount
 from src.company_account import CompanyAccount 
@@ -12,9 +13,14 @@ class TestTransfers:
 
     @pytest.fixture
     def company_account(self):
-        account = CompanyAccount("firmex", "1234567899")
-        account.balance = 150.0
-        return account
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {'result': {'subject': {'statusVat': 'Czynny'}}}
+        
+        with patch('src.company_account.requests.get', return_value=mock_response):
+            account = CompanyAccount("firmex", "1234567890")
+            account.balance = 150.0
+            return account
 
     def test_outgoing_personal_express(self, personal_account):
         personal_account.express_outgoing(50.0)

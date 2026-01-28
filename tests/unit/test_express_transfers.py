@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch, MagicMock
 from src.account import Account
 from src.personal_account import PersonalAccount
 from src.company_account import CompanyAccount 
@@ -26,7 +27,11 @@ class TestTransfers:
         if account_type == "personal":
             account = PersonalAccount("Alice", "Johnson", "12345678901")
         else:
-            account = CompanyAccount("firmex", "1234567899")
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {'result': {'subject': {'statusVat': 'Czynny'}}}
+            with patch('src.company_account.requests.get', return_value=mock_response):
+                account = CompanyAccount("firmex", "1234567890")
         
         account.balance = initial_balance
         account.express_outgoing(amount)
@@ -37,7 +42,11 @@ class TestTransfers:
         if account_type == "personal":
             account = PersonalAccount("Alice", "Johnson", "12345678901")
         else:
-            account = CompanyAccount("firmex", "1234567899")
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {'result': {'subject': {'statusVat': 'Czynny'}}}
+            with patch('src.company_account.requests.get', return_value=mock_response):
+                account = CompanyAccount("firmex", "1234567890")
         
         account.balance = 100.0
         account.express_incoming(50.0)
